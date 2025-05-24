@@ -14,15 +14,15 @@ Whether you're looking to create nostalgic pixel art, experiment with abstract i
 
 ### Pixelated Image PNG
 
-![Pixelated Image PNG](pixelated_image.png)
+![Pixelated Image PNG](https://github.com/davidtiberias/pixelator-app/blob/main/pixelated_image.png?raw=true)
 
 ### Pixelated Image SVG
 
-![Pixelated Image SVG](pixelated_image.svg)
+![Pixelated Image SVG](https://github.com/davidtiberias/pixelator-app/blob/main/pixelated_image.svg?raw=true)
 
 ### Pixelated Image ICO
 
-![PPixelated Image ICO](pixelated_icon.png)
+![PPixelated Image ICO](https://github.com/davidtiberias/pixelator-app/blob/main/pixelated_icon.png?raw=true)
 
 ---
 
