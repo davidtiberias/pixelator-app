@@ -84,49 +84,48 @@ graph TD
 
 ```
 
-## Flow Breakdown:
+## Flow Breakdown: Advanced Pixelator App
 
-### Initialization (A, B):
+This document outlines the step-by-step process of how the pixelator app transforms an image based on user settings.
 
-The function begins by receiving the Canvas 2D context (ctx), the ImageData object (which already includes any applied margin), and the user settings.
-The canvas dimensions are set to match the imageData dimensions, and the background is filled with the user-selected backgroundColor.
+### Initialization (A, B)
 
-### Pixel Data Preparation (C):
+The function starts by taking in the **Canvas 2D context** (`ctx`), the **ImageData** object (which already includes any applied margin), and the user's **settings**. The canvas dimensions are then set to match the `imageData`, and the background is filled with the user-selected `backgroundColor`.
 
-A mutable Uint8ClampedArray (sourcePixels) is created from the imageData.data. This copy allows dithering algorithms to modify pixel values without affecting the original ImageData object directly, ensuring clean error propagation.
+### Pixel Data Preparation (C)
 
-### Color Limiting & Palette Generation (D, E):
+A **mutable `Uint8ClampedArray` (`sourcePixels`)** is created from `imageData.data`. This copy is crucial because it allows dithering algorithms to modify pixel values directly without altering the original `ImageData` object, ensuring clean error propagation.
 
-If enableColorLimit is true, a uniform palette is generated based on the numColors setting. This palette contains the target colors for quantization.
+### Color Limiting & Palette Generation (D, E)
 
-### Dithering Application (F, G, H, I, J):
+If `enableColorLimit` is `true`, a **uniform color palette** is generated based on the `numColors` setting. This palette contains the target colors for the quantization process.
 
-If color limiting is enabled and a dithering algorithm (floyd-steinberg, atkinson, or ordered) is selected, the corresponding dithering function is applied. These functions modify the sourcePixels array in place, spreading quantization errors to adjacent pixels to simulate a wider range of colors. If "None" is selected, no dithering occurs.
-Helper Functions: getPixelColorFromArray and setPixelColorInArray are crucial here, providing safe and efficient pixel access and modification within the sourcePixels array.
+### Dithering Application (F, G, H, I, J)
 
-### Main Pixelation Loop (K):
+If color limiting is enabled and a dithering algorithm (`floyd-steinberg`, `atkinson`, or `ordered`) is chosen, the corresponding **dithering function** is applied. These functions modify the `sourcePixels` array in place, effectively spreading quantization errors to neighboring pixels to simulate a broader range of colors. If "None" is selected, no dithering occurs. Helper functions like `getPixelColorFromArray` and `setPixelColorInArray` are vital here for safe and efficient pixel access and modification within the `sourcePixels` array.
 
-The core of the pixelation process involves iterating over the image, dividing it into blocks based on the pixelDensity and tessellationPattern.
+---
 
-### Tessellation Pattern Logic (L, M, N, O):
+### Main Pixelation Loop (K)
 
-Based on the tessellationPattern setting (grid, hexagonal, triangular), the control is passed to a dedicated drawing function (drawGrid, drawHexagonal, drawTriangular). These functions handle the specific geometry and iteration logic for their respective patterns.
+The core of the pixelation process involves iterating over the image, dividing it into smaller blocks based on the `pixelDensity` and `tessellationPattern`.
 
-### Average Color Calculation (P):
+### Tessellation Pattern Logic (L, M, N, O)
 
-Within each pattern's loop, getAverageColorForBlock is called. This helper function samples the sourcePixels within the current block (defined by the pattern's geometry) to determine the average color of that area.
+Depending on the chosen `tessellationPattern` (e.g., `grid`, `hexagonal`, `triangular`), control is passed to a **dedicated drawing function** (like `drawGrid`, `drawHexagonal`, `drawTriangular`). Each of these functions handles the specific geometry and iteration logic for its respective pattern.
 
-### Final Color Quantization (Q, R, S):
+### Average Color Calculation (P)
 
-If enableColorLimit is true AND dithering is set to "None", the findClosestColor function is used to snap the average color to the nearest color in the activePalette. If dithering was applied, this step is skipped as the sourcePixels already contain dithered (quantized) colors.
+Within each pattern's loop, `getAverageColorForBlock` is called. This helper function samples the `sourcePixels` within the current block (defined by the pattern's geometry) to determine the **average color** of that specific area.
 
-### Shape Drawing (T):
+### Final Color Quantization (Q, R, S)
 
-The drawShape function is called to render the pixel block on the main canvas. It takes the calculated color, pixelDensity, vectorShape, shapeRotation, and outline settings to draw the appropriate geometric shape.
-Drawing Helpers: ctx.save/restore, ctx.translate/rotate, and ctx.beginPath/fill/stroke are fundamental Canvas API methods used by drawShape to manage drawing states and render shapes efficiently.
+If `enableColorLimit` is `true` AND dithering is set to "None", the `findClosestColor` function is used to snap the average color to the **nearest color in the `activePalette`**. If dithering was already applied, this step is skipped because the `sourcePixels` already contain the dithered (quantized) colors.
 
-### Function End (U):
+### Shape Drawing (T)
 
-Once all pixel blocks are drawn, the processImage function resolves its promise, returning information such as the finalColorCount and detailedTimings for performance analysis.
+The `drawShape` function is then called to render the pixel block onto the main canvas. It uses the calculated color, `pixelDensity`, `vectorShape`, `shapeRotation`, and any outline settings to draw the appropriate **geometric shape**. Drawing helpers like `ctx.save`/`restore`, `ctx.translate`/`rotate`, and `ctx.beginPath`/`fill`/`stroke` are fundamental Canvas API methods used by `drawShape` to manage drawing states and render shapes efficiently.
 
-This modular design ensures that each part of the pixelation process is encapsulated and manageable, contributing to a robust and extensible application.
+### Function End (U)
+
+Once all pixel blocks are drawn, the `processImage` function **resolves its promise**, returning important information such as the `finalColorCount` and `detailedTimings` for performance analysis. This modular design ensures that each part of the pixelation process is encapsulated and manageable, contributing to a robust and extensible application.
