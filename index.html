@@ -5,48 +5,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Advanced Pixelator</title>
-    <link rel="icon" type="image/png" href="pixelated_icon.png">
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Additional styles for stats overlay */
-        #main-content-wrapper {
-            position: relative;
-            /* Needed for absolute positioning of children */
-        }
-
-        #statsContainer {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            z-index: 10;
-            /* Ensure it's above the canvas */
-            background-color: rgba(0, 0, 0, 0.7);
-            /* Semi-transparent background */
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            /* text-sm */
-            line-height: 1.5;
-            pointer-events: none;
-            /* Allow clicks to pass through to canvas if needed */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        #statsContainer.hidden {
-            display: none;
-        }
-
-        #statsContainer p {
-            margin: 0;
-            padding: 0.1rem 0;
-        }
-    </style>
 </head>
 
 <body>
     <header id="titlebar">
-        <h1>Advanced Pixelator</h1>
+        <h1><a href="https://github.com/davidtiberias/pixelator-app" target="_blank"
+                title="View project on GitHub">Advanced Pixelator</a></h1>
+        <fieldset class="project-link-container">
+            <a href="https://davidtiberias.github.io/web/home.html" target="_blank"
+                title="Visit David Tiberias' GitHub Pages project">
+                <img src="https://davidtiberias.github.io/web/ec878182641cb7042590644432d721c4.jpg"
+                    alt="David Tiberias Portfolio Page">
+            </a>
+        </fieldset>
     </header>
 
     <main id="container">
