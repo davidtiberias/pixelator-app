@@ -1,6 +1,6 @@
 # Pixelator App: Your Browser-Based Image Pixelation Tool
 
-![Pixelator App Screenshot Placeholder](https://placehold.co/800x400/333333/FFFFFF?text=Pixelator+App+Preview)
+![Pixelator App Screenshot Placeholder](https://github.com/davidtiberias/pixelator-app/blob/main/Advanced%20Pixelator.png?raw=true)
 
 The Pixelator App is a straightforward and intuitive web application designed to help you transform any image into a unique pixel art representation directly within your browser. Forget complex software – simply upload an image or provide a URL, adjust the pixelation level, and instantly see your photos rendered in a blocky, retro style.
 
