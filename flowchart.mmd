@@ -1,0 +1,53 @@
+graph TD
+    A["processImage Function Start"] --> B{"Initialize Canvas & Settings"};
+    B --> C["Create Mutable Copy of Pixel Data<br>(sourcePixels from imageData)"];
+
+    C --> D{"Enable Color Limit?"};
+
+    D -- Yes --> E["Generate Uniform Palette"];
+    E --> F{"Dithering Algorithm?"};
+
+    F -- "Floyd-Steinberg" --> G["applyFloydSteinbergDithering"];
+    F -- "Atkinson" --> H["applyAtkinsonDithering"];
+    F -- "Ordered" --> I["applyOrderedDithering"];
+    F -- "None" --> J["No Dithering Applied"];
+
+    G --> K{"Main Pixelation Loop (Iterate over image)"};
+    H --> K;
+    I --> K;
+    J --> K;
+
+    K --> L{"Tessellation Pattern?"};
+
+    L -- "grid" --> M["Grid Loop Logic"];
+    L -- "hexagonal" --> N["Hexagonal Loop Logic"];
+    L -- "triangular" --> O["Triangular Loop Logic"];
+
+    M --> P["Get Average Color for Block"];
+    N --> P;
+    O --> P;
+
+    P --> Q{"Apply Color Limit (if dithering is 'none')?"};
+    Q -- Yes --> R["findClosestColor from Palette"];
+    Q -- No --> S["Use Average Color Directly"];
+
+    R --> T["Draw Shape on Canvas"];
+    S --> T;
+
+    T --> U["Function End / Resolve Promise"];
+
+    subgraph Dithering & Pixel Access Helpers
+        G -.-> V(getPixelColorFromArray);
+        H -.-> V;
+        I -.-> V;
+        G -.-> W(setPixelColorInArray);
+        H -.-> W;
+        I -.-> W;
+        P -.-> V;
+    end
+
+    subgraph Drawing Helpers
+        T --> X(ctx.save/restore);
+        T --> Y(ctx.translate/rotate);
+        T --> Z(ctx.beginPath/fill/stroke);
+    end

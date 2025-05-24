@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Pixelator</title>
+    <link rel="icon" type="image/png" href="pixelated_icon.png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Additional styles for stats overlay */
+        #main-content-wrapper {
+            position: relative;
+            /* Needed for absolute positioning of children */
+        }
+
+        #statsContainer {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            z-index: 10;
+            /* Ensure it's above the canvas */
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Semi-transparent background */
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            /* text-sm */
+            line-height: 1.5;
+            pointer-events: none;
+            /* Allow clicks to pass through to canvas if needed */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        #statsContainer.hidden {
+            display: none;
+        }
+
+        #statsContainer p {
+            margin: 0;
+            padding: 0.1rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="titlebar">
+        <h1>Advanced Pixelator</h1>
+    </header>
+
+    <main id="container">
+        <aside id="left-sidebar">
+            <section id="flex-grow">
+                <fieldset>
+                    <legend>Image Source</legend>
+                    <div id="image-preview-container">
+                        <img id="imagePreview" alt="Image Preview" />
+                        <p id="noImageText">No image loaded.</p>
+                    </div>
+
+                    <div id="image-info">
+                        <label>Image Info:</label>
+                        <p id="originalDimensions">Original: -</p>
+                        <p id="originalFileSize">Size: -</p>
+                        <p id="outputDimensions">Output: -</p>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="imageUpload">Upload from Device:</label>
+                        <div id="image-upload-area">
+                            <input type="file" id="imageUpload" accept="image/*"
+                                title="Upload an image file from your computer." />
+                            <p>Drag & drop an image here, or <span>click to browse</span></p>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="imageUrlInput">Load from Web URL:</label>
+                        <input type="text" id="imageUrlInput" placeholder="e.g., https://example.com/image.jpg"
+                            title="Paste a direct image URL here to load it." />
+                        <div class="button-group">
+                            <button id="loadImageFromUrlBtn" title="Load the image from the provided web URL.">
+                                Load Image
+                            </button>
+                            <button id="loadDefaultImageBtn" title="Load a random example image to try the pixelator.">
+                                Load Example
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div id="errorMessage" role="alert" aria-live="polite"></div>
+                <div id="loadingIndicator" role="status" aria-live="polite">Loading image...</div>
+            </section>
+
+            <footer id="sidebar-sticky-footer">
+                <button id="processImageBtn" title="Apply the selected settings to generate the pixelated image.">
+                    Process Image
+                </button>
+                <button id="toggleImageBtn" title="Swap between the original and processed image." disabled>
+                    Show Original
+                </button>
+                <div class="button-group download-button-group"> <button id="downloadImageBtn"
+                        title="Download the generated pixelated image as a PNG file." disabled>
+                        .png
+                    </button>
+                    <button id="downloadSvgBtn" title="Download the generated pixelated image as an SVG vector file."
+                        disabled>
+                        .svg
+                    </button>
+                    <button id="downloadIcoBtn"
+                        title="Download the generated pixelated image as a small PNG file (renamed to .ico)." disabled>
+                        .ico
+                    </button>
+                </div>
+                <button id="clearCanvasBtn" title="Clear the current image and reset all settings.">
+                    Clear Canvas / Reset
+                </button>
+            </footer>
+        </aside>
+
+        <section id="main-content-wrapper">
+            <div id="canvas-container">
+                <canvas id="imageCanvas"></canvas>
+                <div id="canvas-placeholder">
+                    Upload an image or paste a URL to get started!
+                </div>
+                <div id="processingIndicator" role="status" aria-live="polite">
+                    Processing image...
+                </div>
+            </div>
+            <div id="statsContainer" class="hidden">
+                <p id="processingTime">Total Processing Time: -</p>
+                <p id="canvasInitTime">Canvas Init: -</p>
+                <p id="paletteGenTime">Palette Gen: -</p>
+                <p id="ditheringTime">Dithering: -</p>
+                <p id="shapeDrawingTime">Shape Drawing: -</p>
+                <p id="finalColorCount">Final Colors: -</p>
+            </div>
+        </section>
+
+        <aside id="right-sidebar">
+            <section id="flex-grow">
+                <fieldset>
+                    <legend>Settings</legend>
+                    <div class="control-group">
+                        <label for="imageMarginInput">Image Margin (px):</label>
+                        <input type="number" id="imageMarginInput" value="0" min="0"
+                            title="Add a margin around the image content. This margin will also be pixelated." />
+                    </div>
+                    <div class="control-group">
+                        <label>Aspect Ratio:</label>
+                        <div id="aspect-ratio-buttons" class="button-group">
+                            <button data-ratio="1:1" title="Set output image aspect ratio to 1:1 (square).">
+                                1:1
+                            </button>
+                            <button data-ratio="16:9" title="Set output image aspect ratio to 16:9 (widescreen).">
+                                16:9
+                            </button>
+                            <button data-ratio="4:3" title="Set output image aspect ratio to 4:3 (standard).">
+                                4:3
+                            </button>
+                            <button data-ratio="original" title="Use the original image's aspect ratio.">
+                                Original
+                            </button>
+                            <button id="customRatioBtn" title="Define a custom aspect ratio.">
+                                Custom
+                            </button>
+                        </div>
+                        <input type="text" id="imageRatioInput" placeholder="e.g., 3:2 or 1.5" readonly
+                            title="Enter a custom aspect ratio (e.g., 3:2 or 1.5)." />
+                    </div>
+
+                    <details open>
+                        <summary>Pixelation Style</summary>
+                        <div>
+                            <div class="control-group">
+                                <label for="mainSizeInput">Pixel Density (Size):</label>
+                                <input type="number" id="mainSizeInput" value="20" min="1"
+                                    title="Adjust the primary size of the pixel blocks. Smaller values mean higher density." />
+                            </div>
+
+                            <div class="control-group">
+                                <label for="tessellationPatternSelect">Arrangement Pattern:</label>
+                                <select id="tessellationPatternSelect"
+                                    title="Choose how the pixel blocks are arranged (e.g., standard grid, hexagonal, triangular).">
+                                    <option value="grid">Grid</option>
+                                    <option value="hexagonal">Hexagonal</option>
+                                    <option value="triangular">Triangular</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="vectorShapeSelect">Pixel Shape:</label>
+                                <select id="vectorShapeSelect"
+                                    title="Select the geometric shape used for each pixel block (e.g., square, circle, triangle).">
+                                    <option value="square">Square</option>
+                                    <option value="circle">Circle</option>
+                                    <option value="triangle">Triangle</option>
+                                    <option value="hexagon">Hexagon</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="vectorShapeSizeInput">Pixel Shape Size (Multiplier):</label>
+                                <input type="number" id="vectorShapeSizeInput" value="1.0" min="0.1" max="2.0"
+                                    step="0.1"
+                                    title="Adjust the size of the individual pixel shapes relative to the pixel density (1.0 means full size)." />
+                            </div>
+
+                            <div class="control-group">
+                                <label for="shapeRotationInput">Shape Rotation (Degrees):</label>
+                                <input type="number" id="shapeRotationInput" value="0" min="0" max="360" step="1"
+                                    title="Rotate each individual pixel shape by this many degrees." />
+                            </div>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Offset (Grid Pattern Only)</summary>
+                        <div>
+                            <div class="control-group">
+                                <label for="offsetXInput">Horizontal Offset (X):</label>
+                                <input type="number" id="offsetXInput" value="0"
+                                    title="Adjust horizontal offset for grid patterns." />
+                            </div>
+                            <div class="control-group">
+                                <label for="offsetYInput">Vertical Offset (Y):</label>
+                                <input type="number" id="offsetYInput" value="0"
+                                    title="Adjust vertical offset for grid patterns." />
+                            </div>
+                            <div class="control-group">
+                                <label for="offsetDirectionSelect">Offset Direction:</label>
+                                <select id="offsetDirectionSelect"
+                                    title="Choose the direction of the offset for alternating rows/columns.">
+                                    <option value="none">None</option>
+                                    <option value="horizontal">Horizontal</option>
+                                    <option value="vertical">Vertical</option>
+                                    <option value="checkerboard">Checkerboard</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="offsetPatternSelect">Offset Application:</label>
+                                <select id="offsetPatternSelect"
+                                    title="Define how the offset is applied (e.g., alternating rows, random).">
+                                    <option value="none">None</option>
+                                    <option value="alternating">Alternating</option>
+                                    <option value="random">Random</option>
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Color Palette</summary>
+                        <div>
+                            <div class="control-group">
+                                <input type="checkbox" id="enableColorLimit"
+                                    title="Enable limiting the number of colors in the output." />
+                                <label for="enableColorLimit">Limit Colors</label>
+                            </div>
+                            <div class="control-group">
+                                <label for="numColorsInput">Number of Colors:</label>
+                                <input type="number" id="numColorsInput" value="16" min="2" max="256" disabled
+                                    title="Specify the maximum number of colors in the pixelated image." />
+                            </div>
+                            <div class="control-group">
+                                <label for="ditheringSelect">Dithering:</label>
+                                <select id="ditheringSelect" disabled
+                                    title="Apply a dithering pattern to simulate more colors with a limited palette.">
+                                    <option value="none">None</option>
+                                    <option value="floyd-steinberg">Floyd-Steinberg</option>
+                                    <option value="atkinson">Atkinson</option>
+                                    <option value="ordered">Ordered (Bayer)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Edge Outline</summary>
+                        <div>
+                            <div class="control-group">
+                                <input type="checkbox" id="enableEdgeOutline"
+                                    title="Enable drawing outlines around pixel blocks." />
+                                <label for="enableEdgeOutline">Enable Outline</label>
+                            </div>
+                            <div class="control-group">
+                                <label for="outlineWidthInput">Outline Width:</label>
+                                <input type="number" id="outlineWidthInput" value="1" min="0" max="10" disabled
+                                    title="Set the width of the pixel block outlines." />
+                            </div>
+                            <div class="control-group">
+                                <label for="outlineColorPicker">Outline Color:</label>
+                                <input type="color" id="outlineColorPicker" value="#000000" disabled
+                                    title="Select the color for the pixel block outlines." />
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="control-group">
+                        <label for="backgroundColorPicker">Background Color:</label>
+                        <input type="color" id="backgroundColorPicker" value="#000000"
+                            title="Select the background color that fills empty space between shapes." />
+                    </div>
+
+                    <div class="control-group">
+                        <input type="checkbox" id="realtimePreviewToggle" checked
+                            title="Enable real-time updates as you change settings (may affect performance)." />
+                        <label for="realtimePreviewToggle">Real-time Preview</label>
+                    </div>
+
+                    <div class="control-group">
+                        <input type="checkbox" id="showStatsToggle" checked
+                            title="Toggle the visibility of the processing statistics overlay." />
+                        <label for="showStatsToggle">Show Statistics</label>
+                    </div>
+                </fieldset>
+            </section>
+        </aside>
+    </main>
+</body>
+<script type="module" src="script.js"></script>
+
+</html>

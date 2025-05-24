@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tessellation Grid (p5.js) - Square, Triangular & Hexagonal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        /* Custom styles for the Inter font and overall layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #e0e7ff;
+            /* A slightly darker blue-gray background for contrast */
+            padding: 1rem;
+        }
+
+        canvas {
+            border: 2px solid #a78bfa;
+            /* A more prominent border for the canvas */
+            background-color: white;
+            /* White background for the grid */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            /* More pronounced shadow */
+            border-radius: 0.75rem;
+            /* More rounded corners */
+            max-width: 100%;
+            /* Ensure responsiveness */
+            min-height: 400px;
+            /* Minimum height for visibility */
+            display: block;
+            /* Remove extra space below canvas */
+        }
+
+        /* Style for the range input for better visibility */
+        input[type="range"] {
+            /* Remove default styling */
+            width: 100%;
+            height: 10px;
+            /* Slightly thicker track */
+            background: #9ca3af;
+            /* Darker track color */
+            outline: none;
+            opacity: 0.9;
+            /* More opaque */
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            border-radius: 5px;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            /* Larger thumb */
+            height: 24px;
+            /* Larger thumb */
+            border-radius: 50%;
+            background: #4f46e5;
+            /* Darker blue thumb color */
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4f46e5;
+            /* Darker blue thumb color */
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-4 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-6 text-indigo-700">Tessellation Grid (p5.js)</h1>
+
+        <div
+            class="bg-white p-6 rounded-lg shadow-xl mb-8 w-full flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+            <div class="flex flex-col items-center w-full md:w-1/2">
+                <label for="gridSizeInput" class="text-lg font-medium mb-2 text-gray-700">Grid Size:</label>
+                <input type="range" id="gridSizeInput" min="5" max="100" value="20" class="w-full">
+                <span id="gridSizeValue" class="text-indigo-600 font-semibold mt-2">20</span>
+            </div>
+            <button id="toggleGridButton"
+                class="px-8 py-4 bg-purple-600 text-white font-bold rounded-lg shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105">
+                Switch Grid Type
+            </button>
+            <button id="redrawButton"
+                class="px-8 py-4 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105">
+                Redraw Grid
+            </button>
+        </div>
+
+        <div class="flex justify-center items-center w-full">
+            <div id="p5-canvas-container" class="w-full h-auto flex justify-center"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for p5.js sketch
+        let gridSize = 20; // Initial grid size (applies to both square, triangle side, and hexagon side)
+        let canvasContainer;
+        let currentGridType = 'square'; // 'square', 'triangle', 'hexagonal-pointy', or 'hexagonal-flat'
+        const gridTypes = ['square', 'triangle', 'hexagonal-flat-column-staggered', 'hexagonal-pointy-row-staggered']; // Updated grid types
+        let currentGridTypeIndex = 0;
+
+
+        // This is the p5.js sketch
+        const s = (sketch) => {
+            sketch.setup = () => {
+                canvasContainer = document.getElementById('p5-canvas-container');
+                // Set initial canvas size, it will be responsive via windowResized
+                const p5Canvas = sketch.createCanvas(canvasContainer.offsetWidth, 600);
+                p5Canvas.parent('p5-canvas-container');
+                sketch.background(255); // White background
+                sketch.noLoop(); // Only redraw when explicitly told to
+                console.log(`p5.js setup: Canvas created with dimensions ${sketch.width}x${sketch.height}`);
+
+                // Event listener for grid size slider
+                document.getElementById('gridSizeInput').addEventListener('input', () => {
+                    gridSize = parseInt(document.getElementById('gridSizeInput').value, 10);
+                    document.getElementById('gridSizeValue').textContent = gridSize;
+                    sketch.redraw();
+                    console.log(`Slider input: gridSize updated to ${gridSize}, triggering redraw.`);
+                });
+
+                // Event listener for redraw button
+                document.getElementById('redrawButton').addEventListener('click', () => {
+                    sketch.redraw();
+                    console.log("Redraw button clicked, triggering redraw.");
+                });
+
+                // Event listener for toggle grid type button
+                document.getElementById('toggleGridButton').addEventListener('click', () => {
+                    currentGridTypeIndex = (currentGridTypeIndex + 1) % gridTypes.length;
+                    currentGridType = gridTypes[currentGridTypeIndex];
+                    // Update button text to show the *next* grid type
+                    const nextGridTypeName = gridTypes[(currentGridTypeIndex + 1) % gridTypes.length];
+                    document.getElementById('toggleGridButton').textContent = `Switch to ${nextGridTypeName.replace(/-/g, ' ').charAt(0).toUpperCase() + nextGridTypeName.replace(/-/g, ' ').slice(1)} Grid`;
+                    sketch.redraw();
+                    console.log(`Grid type toggled to: ${currentGridType}, triggering redraw.`);
+                });
+            };
+
+            /**
+             * Draws an upward-pointing equilateral triangle.
+             * @param {p5} sketchInstance - The p5.js sketch instance.
+             * @param {number} x - The x-coordinate of the bottom-left vertex.
+             * @param {number} y - The y-coordinate of the bottom-left vertex.
+             * @param {number} side - The side length of the triangle.
+             * @param {number} height - The height of the triangle.
+             */
+            const drawUpTriangle = (sketchInstance, x, y, side, height) => {
+                sketchInstance.triangle(
+                    x, y,                 // Bottom-left vertex
+                    x + side, y,          // Bottom-right vertex
+                    x + side / 2, y - height // Top vertex
+                );
+            };
+
+            /**
+             * Draws a hexagon centered at (x, y).
+             * @param {p5} sketchInstance - The p5.js sketch instance.
+             * @param {number} x - The x-coordinate of the hexagon's center.
+             * @param {number} y - The y-coordinate of the hexagon's center.
+             * @param {number} side - The side length of the hexagon.
+             * @param {boolean} isPointyTop - True for pointy-top, false for flat-top.
+             */
+            const drawHexagon = (sketchInstance, x, y, side, isPointyTop) => {
+                sketchInstance.beginShape();
+                const startAngle = isPointyTop ? sketchInstance.PI / 6 : 0; // PI/6 for pointy, 0 for flat
+                for (let i = 0; i < 6; i++) {
+                    const angle = sketchInstance.TWO_PI / 6 * i + startAngle;
+                    const hx = x + side * sketchInstance.cos(angle);
+                    const hy = y + side * sketchInstance.sin(angle);
+                    sketchInstance.vertex(hx, hy);
+                }
+                sketchInstance.endShape(sketchInstance.CLOSE);
+            };
+
+
+            sketch.draw = () => {
+                sketch.background(255); // Clear the canvas with white background
+                sketch.stroke(0); // Black lines
+                sketch.strokeWeight(1); // Set line thickness to 1 for precise tessellation
+                sketch.noFill(); // Draw outlines only
+
+                console.log(`p5.js draw: Drawing ${currentGridType} grid with gridSize: ${gridSize}, Canvas: ${sketch.width}x${sketch.height}`);
+
+                if (currentGridType === 'square') {
+                    // Draw Square Grid
+                    for (let y = 0; y < sketch.height; y += gridSize) {
+                        for (let x = 0; x < sketch.width; x += gridSize) {
+                            sketch.rect(x, y, gridSize, gridSize);
+                        }
+                    }
+                } else if (currentGridType === 'triangle') {
+                    // Draw Triangular Grid with all triangles pointing in one direction and shifted rows
+                    const triSide = gridSize;
+                    const triHeight = (triSide * sketch.sqrt(3)) / 2;
+
+                    // Global offset to center the grid visually and ensure full coverage
+                    const globalOffsetX = triSide / 2;
+                    const globalOffsetY = triHeight / 2;
+
+                    // Iterate through rows of triangles
+                    for (let row = -2; ; row++) {
+                        let yBase = row * triHeight + globalOffsetY;
+                        if (yBase > sketch.height + triHeight) break;
+
+                        for (let col = -2; ; col++) {
+                            let xBase = col * triSide + globalOffsetX;
+                            if (row % 2 !== 0) {
+                                xBase += triSide / 2;
+                            }
+                            if (xBase > sketch.width + triSide) break;
+
+                            drawUpTriangle(sketch, xBase, yBase + triHeight, triSide, triHeight);
+                        }
+                    }
+                } else if (currentGridType === 'hexagonal-flat-column-staggered') {
+                    // Draw Flat-Top Hexagonal Grid (Column-Staggered - will have gaps)
+                    const hexSide = gridSize;
+                    const hexWidth = hexSide * 2; // Width of flat-top hex (distance between pointy ends)
+                    const hexHeight = hexSide * sketch.sqrt(3); // Height of flat-top hex (distance between flat sides)
+
+                    // Horizontal step between centers of adjacent columns
+                    const xStep = hexWidth * 0.75; // This is the standard horizontal step for flat-top
+                    // Vertical step for column staggering (half the hex height)
+                    const yStep = hexHeight; // Standard vertical step for rows
+
+                    // Global offset to center the grid visually
+                    const globalOffsetX = hexWidth / 2;
+                    const globalOffsetY = hexHeight / 2;
+
+                    // Iterate through columns
+                    for (let col = -1; col * xStep < sketch.width + hexWidth; col++) {
+                        let xCenter = col * xStep + globalOffsetX;
+
+                        // Vertical offset for EVEN columns (as per request "shift even column")
+                        // In 0-indexed columns, even columns are 0, 2, 4...
+                        let yColOffset = (col % 2 === 0) ? hexHeight / 2 : 0; // Shift even columns by half height
+
+                        // Iterate through rows within each column
+                        for (let row = -1; row * yStep < sketch.height + hexHeight; row++) {
+                            let yCenter = row * yStep + yColOffset + globalOffsetY;
+
+                            drawHexagon(sketch, xCenter, yCenter, hexSide, false); // false for flat-top
+                        }
+                    }
+                } else if (currentGridType === 'hexagonal-pointy-row-staggered') {
+                    // Draw Pointy-Top Hexagonal Grid (Row-Staggered - will have gaps)
+                    const hexSide = gridSize;
+                    const hexWidth = hexSide * sketch.sqrt(3); // Width of pointy-top hex (distance between flat sides)
+                    const hexHeight = hexSide * 2; // Height of pointy-top hex (distance between pointy ends)
+
+                    // Horizontal step for row staggering (half the hex width)
+                    const xStep = hexWidth; // Standard horizontal step for columns
+                    // Vertical step between centers of adjacent rows
+                    const yStep = hexHeight * 0.75; // This is the standard vertical step for pointy-top
+
+                    // Global offset to center the grid visually
+                    const globalOffsetX = hexWidth / 2;
+                    const globalOffsetY = hexHeight / 2;
+
+                    // Iterate through rows
+                    for (let row = -1; row * yStep < sketch.height + hexHeight; row++) {
+                        let yCenter = row * yStep + globalOffsetY;
+
+                        // Horizontal offset for EVEN rows (as per request "shift even rows")
+                        // In 0-indexed rows, even rows are 0, 2, 4...
+                        let xRowOffset = (row % 2 === 0) ? hexWidth / 2 : 0; // Shift even rows by half width
+
+                        // Iterate through columns within each row
+                        for (let col = -1; col * xStep < sketch.width + hexWidth; col++) {
+                            let xCenter = col * xStep + xRowOffset + globalOffsetX;
+
+                            drawHexagon(sketch, xCenter, yCenter, hexSide, true); // true for pointy-top
+                        }
+                    }
+                }
+                console.log("p5.js draw: Finished drawing grid.");
+            };
+
+            // p5.js built-in function for responsiveness
+            sketch.windowResized = () => {
+                // Resize the canvas to match the container's new width and maintain its height
+                sketch.resizeCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight || 600);
+                sketch.redraw();
+                console.log(`p5.js windowResized: Canvas resized to ${sketch.width}x${sketch.height}, triggering redraw.`);
+            };
+        };
+
+        // Initialize the p5.js sketch
+        new p5(s, 'p5-canvas-container');
+
+        // Initial setup for slider value display
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('gridSizeValue').textContent = document.getElementById('gridSizeInput').value;
+        });
+    </script>
+</body>
+
+</html>
