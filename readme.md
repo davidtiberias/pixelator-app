@@ -2,6 +2,14 @@
 
 ![Pixelator App Screenshot Placeholder](https://github.com/davidtiberias/pixelator-app/blob/main/Advanced%20Pixelator.png?raw=true)
 
+## 🌐 Live Demo
+
+---
+
+[Link to Live Demo](https://davidtiberias.github.io/pixelator-app/)
+
+---
+
 The Pixelator App is a straightforward and intuitive web application designed to help you transform any image into a unique pixel art representation directly within your browser. Forget complex software – simply upload an image or provide a URL, adjust the pixelation level, and instantly see your photos rendered in a blocky, retro style.
 
 Whether you're looking to create nostalgic pixel art, experiment with abstract image effects, or simplify complex visuals, the Pixelator App provides quick and easy controls.
@@ -54,12 +62,6 @@ Whether you're looking to create nostalgic pixel art, experiment with abstract i
 3.  **Process Image:** Click the "Process Image" button to apply all selected settings. If "Real-time Preview" is enabled, changes will apply automatically.
 4.  **Toggle View:** Use "Show Original" / "Show Processed" to switch between the original and pixelated versions.
 5.  **Download:** Once satisfied, click the `.png`, `.svg`, or `.ico` buttons to download your pixelated image.
-
----
-
-## 🌐 Live Demo
-
-[Link to Live Demo (Coming Soon!)](https://davidtiberias.github.io/pixelator-app/)
 
 ---
 
